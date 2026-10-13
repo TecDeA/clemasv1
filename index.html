@@ -20,12 +20,51 @@
         content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Simulador de Clemas</title>
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Chip de versión: estilos autocontenidos (no requiere tocar style.css).
+       El chip vive dentro del <h1> del banner, junto al título: se dimensiona
+       en relación al tamaño del título (con mínimos y máximos absolutos) y
+       usa currentColor para adaptarse al tema de la app (claro u oscuro). -->
+  <style>
+    /* El título del banner se muestra en mayúsculas */
+    header h1 {
+      text-transform: uppercase;
+    }
+    .version-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: .35em;
+      margin-left: .45em;                     /* separación del título */
+      padding: .12em .7em;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      font-size: clamp(11px, .5em, 18px);     /* relativo al título */
+      font-weight: 600;
+      letter-spacing: .04em;
+      line-height: 1.2;
+      white-space: nowrap;
+      text-transform: none;                   /* el chip no hereda las mayúsculas */
+      vertical-align: middle;
+      opacity: .85;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .version-chip::before {
+      content: "";
+      width: .5em;
+      height: .5em;
+      flex: none;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: .7;
+    }
+  </style>
 </head>
 <body>
 
   <header>
     <img src="clemas.jpg" alt="Imagen de clemas eléctricas" class="cabecera" />
-    <h1>Montajes de circuitos electrónicos en clemas</h1>
+    <h1>Montajes de circuitos electrónicos en clemas<span id="versionChip" class="version-chip" role="status" aria-live="polite" title="Versión de la aplicación, extraída de sw.js">v…</span></h1>
   </header>
 
   <main>
@@ -70,5 +109,59 @@
   </footer>
 
   <script src="script.js"></script>
+
+  <!-- Chip de versión: lee CACHE_NAME desde sw.js y muestra la versión -->
+  <script>
+    (async function () {
+      'use strict';
+
+      const chip = document.getElementById('versionChip');
+
+      // Devuelve la URL del SW registrado; si no hay ninguno (o aún no controla
+      // la página, p. ej. en la primera carga), usa "sw.js" relativo a la página.
+      async function urlDelSW() {
+        if (!('serviceWorker' in navigator)) return 'sw.js';
+        try {
+          const registro = await navigator.serviceWorker.getRegistration();
+          const sw = registro && (registro.active || registro.waiting || registro.installing);
+          return sw ? sw.scriptURL : 'sw.js';
+        } catch (e) {
+          return 'sw.js';
+        }
+      }
+
+      // Descarga el código del SW (siempre fresco, sin caché) y extrae la
+      // versión de CACHE_NAME.
+      async function versionDesdeSW() {
+        const url = new URL(await urlDelSW(), window.location.href);
+        url.searchParams.set('_ts', Date.now()); // evita cachés intermedios
+        const resp = await fetch(url, { cache: 'no-store' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const codigo = await resp.text();
+        // const CACHE_NAME = 'simulador-clemas-v1.0';  ->  captura "1.0"
+        const m = codigo.match(/CACHE_NAME\s*=\s*['"][^'"]*?v(\d+(?:\.\d+)*(?:[-._][0-9A-Za-z]+)*)['"]/i);
+        return m ? m[1] : null;
+      }
+
+      // Pinta el chip: "v1.0" con la versión; "v—" si no se pudo leer.
+      function pintar(version) {
+        if (!chip) return;
+        if (version) {
+          chip.textContent = 'v' + version;
+          chip.title = 'Versión extraída de sw.js (CACHE_NAME)';
+        } else {
+          chip.textContent = 'v—';
+          chip.title = 'No se pudo leer la versión desde sw.js';
+        }
+      }
+
+      try {
+        pintar(await versionDesdeSW());
+      } catch (err) {
+        console.warn('[chip de versión] No se pudo leer sw.js:', err);
+        pintar(null);
+      }
+    })();
+  </script>
 </body>
 </html>
