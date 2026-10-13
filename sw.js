@@ -1,4 +1,4 @@
-const CACHE_NAME = 'simulador-clemas-v1.0';
+const CACHE_NAME = 'simulador-clemas-v1.1';
 const urlsToCache = [
   '/SimuladorClemas/',
   '/SimuladorClemas/index.html',
