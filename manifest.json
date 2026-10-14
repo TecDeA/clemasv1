@@ -2,12 +2,13 @@
   "name": "Simulador de Clemas",
   "short_name": "SimuladorClemas",
   "description": "Simulador interactivo de clemas eléctricas",
-  "start_url": "/SimuladorClemas/",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0074D9",
   "orientation": "landscape",
-  "scope": "/SimuladorClemas/",
   "icons": [
     {
       "src": "icons/icon-72x72.png",
